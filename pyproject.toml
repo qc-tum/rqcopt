@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rqcopt"
+version = "1.0.0"
+description = "Python package for Riemannian quantum circuit optimization"
+readme = "README.rst"
+authors = [{ name = "Christian B. Mendl", email = "christian.b.mendl@gmail.com" }]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.7"
+dependencies = [
+    "numpy",
+    "scipy",
+]
+
+[project.urls]
+Homepage = "https://github.com/qc-tum/rqcopt"

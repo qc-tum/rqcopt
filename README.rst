@@ -13,8 +13,14 @@ Python package to perform Riemannian quantum circuit optimization for Hamiltonia
 
 Installation
 ------------
-To install *rqcopt*, clone this repository and install it via
+To install *rqcopt* from PyPI, call
 
 .. code-block:: python
 
-    python3 -m pip install <path/to/repo>
+    python3 -m pip install rqcopt
+
+Alternatively, you can clone this repository and install it in development mode via
+
+.. code-block:: python
+
+    python3 -m pip install -e <path/to/repo>
