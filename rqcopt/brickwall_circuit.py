@@ -1,5 +1,5 @@
 import numpy as np
-from .util import project_unitary_tangent, antisymm, real_to_antisymm, antisymm_to_real
+from .util import project_unitary_tangent, antisymm, real_to_antisymm, antisymm_to_real, real_to_skew, skew_to_real
 
 
 def parallel_gates(V, L, perm=None):
@@ -133,6 +133,22 @@ def brickwall_unitary_gradient_vector(Vlist, L, U, perms):
         for j in range(len(grad))]).reshape(-1)
 
 
+def brickwall_ortho_gradient_vector(Vlist, L, U, perms):
+    """
+    Represent the gradient of tr[Uᵀ W] as real vector,
+    where W is the brickwall circuit constructed from the gates in Vlist,
+    for the case of real-valued matrices.
+    """
+    if any([np.iscomplexobj(V) for V in Vlist]) or np.iscomplexobj(U):
+        raise ValueError("requiring real-valued input matrices")
+    grad = brickwall_unitary_grad(Vlist, L, U, perms)
+    # project gradient onto orthogonal matrix manifold, represent as skew-symmetric matrix
+    # and then convert to a vector
+    return np.stack([skew_to_real(
+        antisymm(Vlist[j].T @ grad[j]))
+        for j in range(len(grad))]).reshape(-1)
+
+
 def brickwall_unitary_directed_grad(Vlist, L, Z, k, perms):
     """
     Compute the gradient of W in direction Z with respect to Vlist[k],
@@ -207,7 +223,30 @@ def brickwall_unitary_hessian_matrix(Vlist, L, U, perms):
     return H.reshape((n * 16, n * 16))
 
 
-def squared_brickwall_grad(Vlist, L, A, B, perms):
+def brickwall_ortho_hessian_matrix(Vlist, L, U, perms):
+    """
+    Construct the Hessian matrix of tr[Uᵀ W] with respect to Vlist
+    defining the layers of W,
+    where W is the brickwall circuit constructed from the gates in Vlist,
+    for the case of real-valued matrices.
+    """
+    if any([np.iscomplexobj(V) for V in Vlist]) or np.iscomplexobj(U):
+        raise ValueError("requiring real-valued input matrices")
+    n = len(Vlist)
+    H = np.zeros((n, 6, n, 6))
+    for j in range(n):
+        for k in range(6):
+            # unit vector
+            Z = np.zeros(6)
+            Z[k] = 1
+            Z = real_to_skew(Z, 4)
+            dVZj = brickwall_unitary_hess(Vlist, L, Vlist[j] @ Z, j, U, perms, unitary_proj=True)
+            for i in range(n):
+                H[i, :, j, k] = skew_to_real(antisymm(Vlist[i].T @ dVZj[i]))
+    return H.reshape((n * 6, n * 6))
+
+
+def squared_brickwall_unitary_grad(Vlist, L, A, B, perms):
     """
     Compute the gradient of tr[A W† B W] with respect to Vlist,
     where W is the brickwall circuit constructed from the gates in Vlist
@@ -216,7 +255,7 @@ def squared_brickwall_grad(Vlist, L, A, B, perms):
     return 2 * brickwall_unitary_grad(Vlist, L, B @ brickwall_unitary(Vlist, L, perms) @ A, perms)
 
 
-def squared_brickwall_gradient_vector(Vlist, L, A, B, perms):
+def squared_brickwall_unitary_gradient_vector(Vlist, L, A, B, perms):
     """
     Represent the gradient of tr[A W† B W] as real vector,
     where W is the brickwall circuit constructed from the gates in Vlist
@@ -225,7 +264,17 @@ def squared_brickwall_gradient_vector(Vlist, L, A, B, perms):
     return 2 * brickwall_unitary_gradient_vector(Vlist, L, B @ brickwall_unitary(Vlist, L, perms) @ A, perms)
 
 
-def squared_brickwall_hess(Vlist, L, Z, k, A, B, perms, unitary_proj=False):
+def squared_brickwall_ortho_gradient_vector(Vlist, L, A, B, perms):
+    """
+    Represent the gradient of tr[A Wᵀ B W] as real vector,
+    where W is the brickwall circuit constructed from the gates in Vlist
+    and A and B are Hermitian,
+    for the case of real-valued matrices.
+    """
+    return 2 * brickwall_ortho_gradient_vector(Vlist, L, B @ brickwall_unitary(Vlist, L, perms) @ A, perms)
+
+
+def squared_brickwall_unitary_hess(Vlist, L, Z, k, A, B, perms, unitary_proj=False):
     """
     Compute the Hessian of tr[A W† B W] in direction Z with respect to Vlist[k],
     where W is the brickwall circuit constructed from the gates in Vlist
@@ -238,7 +287,7 @@ def squared_brickwall_hess(Vlist, L, Z, k, A, B, perms, unitary_proj=False):
     return 2 * (H1 + H2)
 
 
-def squared_brickwall_hessian_matrix(Vlist, L, A, B, perms):
+def squared_brickwall_unitary_hessian_matrix(Vlist, L, A, B, perms):
     """
     Construct the Hessian matrix of tr[A W† B W] with respect to Vlist
     defining the layers of W,
@@ -252,10 +301,33 @@ def squared_brickwall_hessian_matrix(Vlist, L, A, B, perms):
             Z = np.zeros(16)
             Z[k] = 1
             Z = real_to_antisymm(np.reshape(Z, (4, 4)))
-            dVZj = squared_brickwall_hess(Vlist, L, Vlist[j] @ Z, j, A, B, perms, unitary_proj=True)
+            dVZj = squared_brickwall_unitary_hess(Vlist, L, Vlist[j] @ Z, j, A, B, perms, unitary_proj=True)
             for i in range(n):
                 H[i, :, j, k] = antisymm_to_real(antisymm(Vlist[i].conj().T @ dVZj[i])).reshape(-1)
     return H.reshape((n * 16, n * 16))
+
+
+def squared_brickwall_ortho_hessian_matrix(Vlist, L, A, B, perms):
+    """
+    Construct the Hessian matrix of tr[A Wᵀ B W] with respect to Vlist
+    defining the layers of W,
+    where W is the brickwall circuit constructed from the gates in Vlist,
+    for the case of real-valued matrices.
+    """
+    if any([np.iscomplexobj(V) for V in Vlist]) or np.iscomplexobj(A) or np.iscomplexobj(B):
+        raise ValueError("requiring real-valued input matrices")
+    n = len(Vlist)
+    H = np.zeros((n, 6, n, 6))
+    for j in range(n):
+        for k in range(6):
+            # unit vector
+            Z = np.zeros(6)
+            Z[k] = 1
+            Z = real_to_skew(Z, 4)
+            dVZj = squared_brickwall_unitary_hess(Vlist, L, Vlist[j] @ Z, j, A, B, perms, unitary_proj=True)
+            for i in range(n):
+                H[i, :, j, k] = skew_to_real(antisymm(Vlist[i].T @ dVZj[i]))
+    return H.reshape((n * 6, n * 6))
 
 
 def permute_operation(U: np.ndarray, perm):

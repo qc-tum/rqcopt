@@ -6,7 +6,7 @@ import rqcopt as oc
 import matplotlib.pyplot as plt
 
 
-def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, rng: np.random.Generator = None, **kwargs):
+def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.random.Generator = None, **kwargs):
     """
     Optimize the quantum gates in a brickwall layout to approximate
     the an Ising Hamiltonian by block-encoding.
@@ -34,7 +34,8 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, rng: np.random.Generator
     # unitaries used as starting point for optimization
     if bootstrap:
         # load optimized unitaries for nlayers - 2 from disk
-        with h5py.File(f"ising1d_blockenc_opt_n{nlayers-2}.hdf5", "r") as f:
+        oum = "real" if real else "complex"
+        with h5py.File(f"ising1d_blockenc_opt_n{nlayers-2}_{oum}.hdf5", "r") as f:
             # parameters must agree
             assert f.attrs["L"] == L
             assert f.attrs["J"] == J
@@ -46,14 +47,17 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, rng: np.random.Generator
         Vlist_start = np.concatenate((id4, Vlist_start, id4), axis=0)
         assert Vlist_start.shape[0] == nlayers
     else:
-        Vlist_start = [scipy.stats.unitary_group.rvs(4, random_state=rng) for _ in range(nlayers)]
+        if real:
+            Vlist_start = [scipy.stats.ortho_group.rvs(4, random_state=rng) for _ in range(nlayers)]
+        else:
+            Vlist_start = [scipy.stats.unitary_group.rvs(4, random_state=rng) for _ in range(nlayers)]
     perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(-(nlayers // 2), (nlayers + 1) // 2)]
     assert len(perms) == nlayers
     # block-encoding isometry
     P = oc.blockenc_isometry(L // 2)
 
     # perform optimization
-    Vlist, f_iter, err_iter = oc.optimize_brickwall_circuit_blockenc(L, H, P, Vlist_start, perms, **kwargs)
+    Vlist, f_iter, err_iter = oc.optimize_brickwall_circuit_blockenc(L, H, P, Vlist_start, perms, real, **kwargs)
 
     # visualize optimization progress
     print(f"err_iter before: {err_iter[0]}")
@@ -73,7 +77,8 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, rng: np.random.Generator
     # save results to disk
     f_iter = np.array(f_iter)
     err_iter = np.array(err_iter)
-    with h5py.File(f"ising1d_blockenc_opt_n{nlayers}.hdf5", "w") as f:
+    oum = "real" if real else "complex"
+    with h5py.File(f"ising1d_blockenc_opt_n{nlayers}_{oum}.hdf5", "w") as f:
         f.create_dataset("Vlist", data=Vlist)
         f.create_dataset("f_iter", data=f_iter)
         f.create_dataset("err_iter", data=err_iter)
@@ -86,14 +91,25 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, rng: np.random.Generator
 def main():
 
     # 3 layers
-    rng = np.random.default_rng(seed=142)
-    ising1d_blockenc_opt(3, False, rng, niter=50)
+    rng = np.random.default_rng(seed=48)
+    ising1d_blockenc_opt(3, False, True, rng, niter=100)
 
     # 5 layers
-    ising1d_blockenc_opt(5, True, niter=50)
+    ising1d_blockenc_opt(5, True, True, niter=30)
 
     # 7 layers
-    ising1d_blockenc_opt(7, True, niter=20)
+    ising1d_blockenc_opt(7, True, True, niter=30)
+
+    # # complex-valued version
+    # # 3 layers
+    # rng = np.random.default_rng(seed=142)
+    # ising1d_blockenc_opt(3, False, False, rng, niter=50)
+
+    # # 5 layers
+    # ising1d_blockenc_opt(5, True, False, niter=50)
+
+    # # 7 layers
+    # ising1d_blockenc_opt(7, True, False, niter=20)
 
 
 if __name__ == "__main__":

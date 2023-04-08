@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.stats import unitary_group
+from scipy.stats import unitary_group, ortho_group
 import unittest
 import rqcopt as oc
 
@@ -260,7 +260,27 @@ class TestBrickwallCircuit(unittest.TestCase):
         # must be symmetric
         self.assertTrue(np.allclose(H, H.T))
 
-    def test_squared_brickwall_gradient(self):
+    def test_brickwall_ortho_hessian_matrix(self):
+        """
+        Test Hessian matrix computation for a brickwall of parallel gates,
+        for the case of real-valued matrices.
+        """
+        rng = np.random.default_rng()
+        # system size
+        L = 8
+        # number of layers
+        n = 5
+        # random unitaries
+        Vlist = [ortho_group.rvs(4, random_state=rng) for _ in range(n)]
+        # random permutations
+        perms = [rng.permutation(L) for _ in range(n)]
+        # surrounding matrix
+        U = 0.25 * rng.standard_normal(2 * (2**L,))
+        H = oc.brickwall_ortho_hessian_matrix(Vlist, L, U, perms)
+        # must be symmetric
+        self.assertTrue(np.allclose(H, H.T))
+
+    def test_squared_brickwall_unitary_gradient(self):
         """
         Test gradient computation for a squared brickwall circuit of parallel gates.
         """
@@ -278,7 +298,7 @@ class TestBrickwallCircuit(unittest.TestCase):
         B = 0.1 * oc.crandn(2 * (2**L,), rng)
         A = 0.5 * (A + A.conj().T)
         B = 0.5 * (B + B.conj().T)
-        dVlist = oc.squared_brickwall_grad(Vlist, L, A, B, perms)
+        dVlist = oc.squared_brickwall_unitary_grad(Vlist, L, A, B, perms)
         # numerical gradient via finite difference approximation
         def f(vlist):
             W = oc.brickwall_unitary(vlist, L, perms)
@@ -286,7 +306,7 @@ class TestBrickwallCircuit(unittest.TestCase):
         dVlist_num = 2 * eval_numerical_gradient_complex(f, Vlist.copy(), h=1e-6).conj()
         self.assertTrue(np.allclose(dVlist_num, dVlist))
 
-    def test_squared_brickwall_hessian(self):
+    def test_squared_brickwall_unitary_hessian(self):
         """
         Test Hessian computation for a squared brickwall circuit of parallel gates.
         """
@@ -309,9 +329,9 @@ class TestBrickwallCircuit(unittest.TestCase):
             rZ = 0.5 * oc.crandn((4, 4), rng)
             for Z in [rZ, oc.project_unitary_tangent(Vlist[k], rZ)]:
                 for uproj in [False, True]:
-                    dVlist = oc.squared_brickwall_hess(Vlist, L, Z, k, A, B, perms, unitary_proj=uproj)
+                    dVlist = oc.squared_brickwall_unitary_hess(Vlist, L, Z, k, A, B, perms, unitary_proj=uproj)
                     # numerical Hessian via finite difference approximation
-                    gf = lambda t: oc.squared_brickwall_grad(Vlist[:k] + [Vlist[k] + t*Z] + Vlist[k+1:], L, A, B, perms)
+                    gf = lambda t: oc.squared_brickwall_unitary_grad(Vlist[:k] + [Vlist[k] + t*Z] + Vlist[k+1:], L, A, B, perms)
                     if uproj:
                         f = lambda t: np.stack([oc.project_unitary_tangent(Vlist[j] + t*Z if j == k else Vlist[j], grad)
                                                 for j, grad in enumerate(gf(t))])
@@ -322,7 +342,7 @@ class TestBrickwallCircuit(unittest.TestCase):
                     # compare
                     self.assertTrue(np.allclose(dVlist_num, dVlist))
 
-    def test_squared_brickwall_hessian_matrix(self):
+    def test_squared_brickwall_unitary_hessian_matrix(self):
         """
         Test Hessian matrix computation for a squared brickwall circuit of parallel gates.
         """
@@ -340,7 +360,29 @@ class TestBrickwallCircuit(unittest.TestCase):
         B = 0.1 * oc.crandn(2 * (2**L,), rng)
         A = 0.5 * (A + A.conj().T)
         B = 0.5 * (B + B.conj().T)
-        H = oc.squared_brickwall_hessian_matrix(Vlist, L, A, B, perms)
+        H = oc.squared_brickwall_unitary_hessian_matrix(Vlist, L, A, B, perms)
+        # must be symmetric
+        self.assertTrue(np.allclose(H, H.T))
+
+    def test_squared_brickwall_ortho_hessian_matrix(self):
+        """
+        Test Hessian matrix computation for a squared brickwall circuit of parallel gates.
+        """
+        rng = np.random.default_rng()
+        # system size
+        L = 8
+        # number of layers
+        n = 5
+        # random unitaries
+        Vlist = [ortho_group.rvs(4, random_state=rng) for _ in range(n)]
+        # random permutations
+        perms = [rng.permutation(L) for _ in range(n)]
+        # enclosing Hermitian matrices
+        A = 0.1 * rng.standard_normal(2 * (2**L,))
+        B = 0.1 * rng.standard_normal(2 * (2**L,))
+        A = 0.5 * (A + A.T)
+        B = 0.5 * (B + B.T)
+        H = oc.squared_brickwall_ortho_hessian_matrix(Vlist, L, A, B, perms)
         # must be symmetric
         self.assertTrue(np.allclose(H, H.T))
 
