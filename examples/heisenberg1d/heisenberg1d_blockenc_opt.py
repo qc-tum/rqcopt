@@ -6,24 +6,26 @@ import rqcopt as oc
 import matplotlib.pyplot as plt
 
 
-def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.random.Generator = None, **kwargs):
+def heisenberg1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.random.Generator = None, **kwargs):
     """
     Optimize the quantum gates in a brickwall layout to approximate
-    the an Ising Hamiltonian by block-encoding.
+    the an Heisenberg Hamiltonian by block-encoding.
     """
     print(f"optimizing a circuit with {nlayers} layers...")
 
     # number of qubits (both physical and auxiliary)
     L = 6
     # Hamiltonian parameters
-    scale = 0.25
-    J = scale * 1
-    g = scale * 0.75
+    scale = 0.15
+    J = ( 1*scale,    1*scale, -0.5*scale)
+    h = ( 0.75*scale, 0,  0)
 
     # construct Hamiltonian
     latt = qib.lattice.IntegerLattice((L // 2,), pbc=True)
     field = qib.field.Field(qib.field.ParticleType.QUBIT, latt)
-    H = np.array(qib.IsingHamiltonian(field, J, 0., g).as_matrix().todense())
+    H = np.array(qib.HeisenbergHamiltonian(field, J, h).as_matrix().todense())
+    if(real):
+        H = np.real(H)
     # spectral norm must be smaller than 1
     nH = np.linalg.norm(H, ord=2)
     print(f"spectral norm of Hamiltonian: {nH} (must be smaller than 1)")
@@ -35,11 +37,11 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.rand
     if bootstrap:
         # load optimized unitaries for nlayers - 2 from disk
         oum = "real" if real else "complex"
-        with h5py.File(f"ising1d_blockenc_opt_n{nlayers-2}_{oum}.hdf5", "r") as f:
+        with h5py.File(f"heisenberg1d_blockenc_opt_n{nlayers-2}_{oum}.hdf5", "r") as f:
             # parameters must agree
             assert f.attrs["L"] == L
-            assert f.attrs["J"] == J
-            assert f.attrs["g"] == g
+            assert all([a == b for a, b in zip(f.attrs["J"], J)])
+            assert all([a == b for a, b in zip(f.attrs["h"], h)])
             Vlist_start = f["Vlist"][:]
             assert Vlist_start.shape[0] == nlayers - 2
         # pad identity matrices
@@ -78,38 +80,38 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.rand
     f_iter = np.array(f_iter)
     err_iter = np.array(err_iter)
     oum = "real" if real else "complex"
-    with h5py.File(f"ising1d_blockenc_opt_n{nlayers}_{oum}.hdf5", "w") as f:
+    with h5py.File(f"heisenberg1d_blockenc_opt_n{nlayers}_{oum}.hdf5", "w") as f:
         f.create_dataset("Vlist", data=Vlist)
         f.create_dataset("f_iter", data=f_iter)
         f.create_dataset("err_iter", data=err_iter)
         # store parameters
         f.attrs["L"] = L
-        f.attrs["J"] = float(J)
-        f.attrs["g"] = float(g)
+        f.attrs["J"] = J
+        f.attrs["h"] = h
 
 
 def main():
 
     # 3 layers
     rng = np.random.default_rng(seed=48)
-    ising1d_blockenc_opt(3, False, True, rng, niter=100)
+    heisenberg1d_blockenc_opt(3, False, True, rng, niter=100)
 
     # 5 layers
-    ising1d_blockenc_opt(5, True, True, niter=30)
+    heisenberg1d_blockenc_opt(5, True, True, niter=100)
 
     # 7 layers
-    ising1d_blockenc_opt(7, True, True, niter=30)
+    heisenberg1d_blockenc_opt(7, True, True, niter=50)
 
     # # complex-valued version
     # # 3 layers
     # rng = np.random.default_rng(seed=142)
-    # ising1d_blockenc_opt(3, False, False, rng, niter=50)
+    # heisenberg1d_blockenc_opt(3, False, False, rng, niter=80)
 
     # # 5 layers
-    # ising1d_blockenc_opt(5, True, False, niter=50)
+    # heisenberg1d_blockenc_opt(5, True, False, niter=80)
 
     # # 7 layers
-    # ising1d_blockenc_opt(7, True, False, niter=20)
+    # heisenberg1d_blockenc_opt(7, True, False, niter=40)
 
 
 if __name__ == "__main__":
