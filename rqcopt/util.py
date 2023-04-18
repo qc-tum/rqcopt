@@ -38,6 +38,27 @@ def antisymm_to_real(w):
     return w.real + w.imag
 
 
+def real_to_skew(r, n: int):
+    """
+    Map a real vector to a skew-symmetric matrix containing the vector entries in its upper-triangular part.
+    """
+    if len(r) != n * (n - 1) // 2:
+        raise ValueError("length of input vector does not match matrix dimension")
+    w = np.zeros((n, n))
+    # sqrt(2) factor to preserve inner products
+    w[np.triu_indices(n, k=1)] = r / np.sqrt(2)
+    w -= w.T
+    return w
+
+
+def skew_to_real(w):
+    """
+    Map a real skew-symmetric matrix to a real vector containing the upper-triangular entries.
+    """
+    # sqrt(2) factor to preserve inner products
+    return np.sqrt(2) * w[np.triu_indices(len(w), k=1)]
+
+
 def project_unitary_tangent(u, z):
     """
     Project `z` onto the tangent plane at the unitary matrix `u`.
@@ -67,10 +88,10 @@ def blockenc_isometry(n: int):
     return p
 
 
-def crandn(size, rng: np.random.Generator=None):
+def crandn(size=None, rng: np.random.Generator=None):
     """
     Draw random samples from the standard complex normal (Gaussian) distribution.
     """
     if rng is None: rng = np.random.default_rng()
     # 1/sqrt(2) is a normalization factor
-    return (rng.normal(size=size) + 1j*rng.normal(size=size)) / np.sqrt(2)
+    return (rng.standard_normal(size) + 1j*rng.standard_normal(size)) / np.sqrt(2)

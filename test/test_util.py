@@ -20,6 +20,24 @@ class TestUtilityFunctions(unittest.TestCase):
         # require u @ p == a
         self.assertTrue(np.allclose(u @ p, a))
 
+    def test_skew_encoding(self):
+        """
+        Test mapping between a real vector and skew-symmetric matrix.
+        """
+        rng = np.random.default_rng()
+        n = 7
+        # random real vector
+        r = rng.standard_normal(n * (n - 1) // 2)
+        w = oc.real_to_skew(r, n)
+        self.assertTrue(np.allclose(w, -w.T))
+        self.assertTrue(np.allclose(r, oc.skew_to_real(w)))
+        self.assertAlmostEqual(np.linalg.norm(r), np.linalg.norm(w, "fro"))
+        # another random real vector
+        s = rng.standard_normal(n * (n - 1) // 2)
+        z = oc.real_to_skew(s, n)
+        # mapping preserves inner products
+        self.assertAlmostEqual(np.dot(s, r), np.trace(z.T @ w))
+
     def test_antisymmetric_encoding(self):
         """
         Test mapping between a real and antisymmetric matrix.
