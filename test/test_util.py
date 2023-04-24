@@ -1,6 +1,7 @@
 import numpy as np
 import unittest
 import rqcopt as oc
+from scipy.stats import unitary_group
 
 
 class TestUtilityFunctions(unittest.TestCase):
@@ -54,6 +55,34 @@ class TestUtilityFunctions(unittest.TestCase):
         z = oc.real_to_antisymm(s)
         # mapping preserves inner products
         self.assertAlmostEqual(np.trace(s.T @ r), np.trace(z.conj().T @ w))
+
+    def test_blockenc_isometry(self):
+        """
+        Test block-encoding isometry.
+        """
+        rng = np.random.default_rng()
+        # random unitary matrix 4x4 (2 qubits)
+        L = 8
+        # default matrix has alternating ancillary qubits
+        anc = [i for i in range(1, L, 2)]
+        p = oc.blockenc_isometry(L, anc)
+        p_auto = oc.blockenc_isometry(L)
+        self.assertTrue(np.allclose(p, p_auto))
+        # random initial state, projected ancillaries on 0
+        pp = p.dot(p.conj().T)
+        psi = oc.crandn(2**L, rng)
+        final_psi = pp.dot(psi)
+        for i in anc:
+            pi = np.identity(1)
+            for j in range(i):
+                pi = np.kron(pi, np.identity(2))
+            pi = np.kron(pi, [[0,0],[0,1]])
+            for  j in range(L-i-1):
+                pi = np.kron(pi, np.identity(2))
+            pi_state = pi @ final_psi
+            self.assertTrue(np.allclose(np.einsum('i,i', pi_state.conj(), pi_state)**2, 0))
+        
+
 
 
 if __name__ == "__main__":

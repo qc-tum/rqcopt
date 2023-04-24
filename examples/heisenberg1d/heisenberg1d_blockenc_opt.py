@@ -61,7 +61,7 @@ def heisenberg1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np
     perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(-(nlayers // 2), (nlayers + 1) // 2)]
     assert len(perms) == nlayers
     # block-encoding isometry
-    P = oc.blockenc_isometry(L // 2)
+    P = oc.blockenc_isometry(L)
 
     # perform optimization
     Vlist, f_iter, err_iter = oc.optimize_brickwall_circuit_blockenc(L, H, P, Vlist_start, perms, real, **kwargs)

@@ -61,7 +61,7 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.rand
     perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(-(nlayers // 2), (nlayers + 1) // 2)]
     assert len(perms) == nlayers
     # block-encoding isometry
-    P = oc.blockenc_isometry(L // 2)
+    P = oc.blockenc_isometry(L)
 
     # perform optimization
     Vlist, f_iter, err_iter = oc.optimize_brickwall_circuit_blockenc(L, H, P, Vlist_start, perms, real, **kwargs)
@@ -105,10 +105,10 @@ def main():
     # ising1d_blockenc_opt(5, True, True, niter=100)
 
     # 7 layers
-    # ising1d_blockenc_opt(7, True, True, niter=100)
+    ising1d_blockenc_opt(7, True, True, niter=100)
     
     # 9 layers
-    ising1d_blockenc_opt(9, True, True, niter=100)
+    # ising1d_blockenc_opt(9, True, True, niter=100)
 
     # # complex-valued version
     # # 3 layers
@@ -119,7 +119,7 @@ def main():
     # ising1d_blockenc_opt(5, True, False, niter=60)
 
     # # 7 layers
-    # ising1d_blockenc_opt(7, True, False, niter=100)
+    # ising1d_blockenc_opt(7, True, False, niter=60)
 
 
 if __name__ == "__main__":

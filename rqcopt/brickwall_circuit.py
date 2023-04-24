@@ -354,6 +354,6 @@ def projection_probability(Vlist, L, perms, state=None):
         state[0] = 1
     assert(len(state)==2**L)
     state = np.einsum('ij,j', brickwall_unitary(Vlist, L, perms), state)
-    p = blockenc_isometry(L//2)
+    p = blockenc_isometry(L)
     pp = p.dot(p.conj().T)
     return abs(np.einsum('i,ij,j', state.conj(), pp, state))**2
