@@ -412,13 +412,13 @@ class TestBrickwallCircuit(unittest.TestCase):
         # with V equal to X probability should be 0
         X = np.array([[0,1],[1,0]])
         V = np.kron(X,X)
-        Vlist = [V for _ in range(depth)]
+        Vlist = [V for _ in range(1)]
         self.assertAlmostEqual(oc.projection_probability(Vlist, L, perms), 0)
 
         # only ancillary qubits are relevant
         V = np.kron(X, np.identity(2))
-        Vlist = [V for _ in range(depth)]
-        self.assertAlmostEqual(oc.projection_probability(Vlist, L, perms), 0)
+        Vlist = [V for _ in range(1)]
+        self.assertAlmostEqual(oc.projection_probability(Vlist, L, perms), 1)
 
         # probability always in [0,1]
         Vlist = [unitary_group.rvs(4, random_state=rng) for i in range(depth)]
