@@ -16,18 +16,23 @@ def heisenberg1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np
     # number of qubits (both physical and auxiliary)
     L = 6
     # Hamiltonian parameters
-    scale = 0.15
-    J = ( 1*scale,    1*scale, -0.5*scale)
-    h = ( 0.75*scale, 0,  0)
+    J = (1, 1, -0.5)
+    h = (0.75, 0, 0)
 
     # construct Hamiltonian
     latt = qib.lattice.IntegerLattice((L // 2,), pbc=True)
     field = qib.field.Field(qib.field.ParticleType.QUBIT, latt)
-    H = np.array(qib.HeisenbergHamiltonian(field, J, h).as_matrix().todense())
-    if(real):
-        H = np.real(H)
+    H_op = qib.HeisenbergHamiltonian(field, J, h)
     # spectral norm must be smaller than 1
+    nH = np.linalg.norm(H_op.as_matrix().todense(), ord=2)
+    scale = 1.25
+    H_op.J /= scale*nH
+    H_op.h /= scale*nH
+    H = H_op.as_matrix().todense()
+    if real:
+        H = np.real(H)
     nH = np.linalg.norm(H, ord=2)
+    assert(nH < 1)
     print(f"spectral norm of Hamiltonian: {nH} (must be smaller than 1)")
 
     print("Hamiltonian:")

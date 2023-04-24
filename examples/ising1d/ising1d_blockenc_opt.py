@@ -14,18 +14,25 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.rand
     print(f"optimizing a circuit with {nlayers} layers...")
 
     # number of qubits (both physical and auxiliary)
-    L = 6
+    L = 8
     # Hamiltonian parameters
-    scale = 0.25
-    J = scale * 1
-    g = scale * 0.75
+    J = 1
+    g = 0.75
 
     # construct Hamiltonian
     latt = qib.lattice.IntegerLattice((L // 2,), pbc=True)
     field = qib.field.Field(qib.field.ParticleType.QUBIT, latt)
-    H = np.array(qib.IsingHamiltonian(field, J, 0., g).as_matrix().todense())
+    H_op = qib.IsingHamiltonian(field, J, 0., g)
     # spectral norm must be smaller than 1
+    nH = np.linalg.norm(H_op.as_matrix().todense(), ord=2)
+    scale = 1.25
+    H_op.J /= scale*nH
+    H_op.g /= scale*nH
+    H = np.array(H_op.as_matrix().todense())
+    if real:
+        H = np.real(H)
     nH = np.linalg.norm(H, ord=2)
+    assert(nH < 1)
     print(f"spectral norm of Hamiltonian: {nH} (must be smaller than 1)")
 
     print("Hamiltonian:")
@@ -91,14 +98,17 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.rand
 def main():
 
     # 3 layers
-    rng = np.random.default_rng(seed=48)
-    ising1d_blockenc_opt(3, False, True, rng, niter=100)
+    # rng = np.random.default_rng(seed=48)
+    # ising1d_blockenc_opt(3, False, True, rng, niter=50)
 
     # 5 layers
-    ising1d_blockenc_opt(5, True, True, niter=30)
+    # ising1d_blockenc_opt(5, True, True, niter=100)
 
     # 7 layers
-    ising1d_blockenc_opt(7, True, True, niter=30)
+    # ising1d_blockenc_opt(7, True, True, niter=100)
+    
+    # 9 layers
+    ising1d_blockenc_opt(9, True, True, niter=100)
 
     # # complex-valued version
     # # 3 layers
@@ -106,10 +116,10 @@ def main():
     # ising1d_blockenc_opt(3, False, False, rng, niter=50)
 
     # # 5 layers
-    # ising1d_blockenc_opt(5, True, False, niter=50)
+    # ising1d_blockenc_opt(5, True, False, niter=60)
 
     # # 7 layers
-    # ising1d_blockenc_opt(7, True, False, niter=20)
+    # ising1d_blockenc_opt(7, True, False, niter=100)
 
 
 if __name__ == "__main__":

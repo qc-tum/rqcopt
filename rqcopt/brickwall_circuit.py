@@ -1,5 +1,5 @@
 import numpy as np
-from .util import project_unitary_tangent, antisymm, real_to_antisymm, antisymm_to_real, real_to_skew, skew_to_real
+from .util import project_unitary_tangent, antisymm, real_to_antisymm, antisymm_to_real, real_to_skew, skew_to_real, blockenc_isometry
 
 
 def parallel_gates(V, L, perm=None):
@@ -341,3 +341,19 @@ def permute_operation(U: np.ndarray, perm):
     U = np.transpose(U, perm + [nsites + p for p in perm])
     U = np.reshape(U, (2**nsites, 2**nsites))
     return U
+
+
+def projection_probability(Vlist, L, perms, state=None):
+    """
+    Calculates the probability of measuring |0000...> on the ancillary qubits
+    after the brickwall circuit.
+    """
+    # initial state |0...0> on the whole system
+    if state is None:
+        state = np.zeros(2**L)
+        state[0] = 1
+    assert(len(state)==2**L)
+    state = np.einsum('ij,j', brickwall_unitary(Vlist, L, perms), state)
+    p = blockenc_isometry(L//2)
+    pp = p.dot(p.conj().T)
+    return abs(np.einsum('i,ij,j', state.conj(), pp, state))**2
