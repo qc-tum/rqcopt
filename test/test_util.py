@@ -72,6 +72,7 @@ class TestUtilityFunctions(unittest.TestCase):
         pp = p.dot(p.conj().T)
         psi = oc.crandn(2**L, rng)
         final_psi = pp.dot(psi)
+        # if I project on |1> states over the ancillary I get 0 probability
         for i in anc:
             pi = np.identity(1)
             for j in range(i):

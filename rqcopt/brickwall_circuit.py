@@ -343,7 +343,7 @@ def permute_operation(U: np.ndarray, perm):
     return U
 
 
-def projection_probability(Vlist, L, perms, state=None):
+def projection_probability(Vlist, L, perms, anc=None, state=None):
     """
     Calculates the probability of measuring |0000...> on the ancillary qubits
     after the brickwall circuit.
@@ -354,6 +354,6 @@ def projection_probability(Vlist, L, perms, state=None):
         state[0] = 1
     assert(len(state)==2**L)
     state = np.einsum('ij,j', brickwall_unitary(Vlist, L, perms), state)
-    p = blockenc_isometry(L)
+    p = blockenc_isometry(L, anc)
     pp = p.dot(p.conj().T)
     return abs(np.einsum('i,ij,j', state.conj(), pp, state))**2
