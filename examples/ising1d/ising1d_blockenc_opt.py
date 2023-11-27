@@ -5,9 +5,10 @@ import h5py
 import rqcopt as oc
 import matplotlib.pyplot as plt
 
-def create_Hamiltonian():
+
+def create_ising_hamiltonian():
     """
-    Create Ising Hamiltonian
+    Create the Ising Hamiltonian.
     """
     # number of physical qubits
     L = 3
@@ -28,7 +29,7 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.rand
     """
     print(f"optimizing a circuit with {nlayers} layers...")
 
-    H_op = create_Hamiltonian()
+    H_op = create_ising_hamiltonian()
     if anc is not None:
         L = H_op.nsites + len(anc)
     else:
@@ -70,7 +71,7 @@ def ising1d_blockenc_opt(nlayers: int, bootstrap: bool, real: bool, rng: np.rand
             Vlist_start = [scipy.stats.ortho_group.rvs(4, random_state=rng) for _ in range(nlayers)]
         else:
             Vlist_start = [scipy.stats.unitary_group.rvs(4, random_state=rng) for _ in range(nlayers)]
-    perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(-(nlayers // 2), (nlayers + 1) // 2)]
+    perms = [None if i % 2 == 0 else np.roll(range(L), 1) for i in range(-(nlayers // 2), (nlayers + 1) // 2)]
     assert len(perms) == nlayers
     # block-encoding isometry
     P = oc.blockenc_isometry(L, anc)
@@ -131,7 +132,6 @@ def main():
     # 9 layers
     ising1d_blockenc_opt(9, restart, real, rng, anc, niter=100)
 
-    
 
 if __name__ == "__main__":
     main()

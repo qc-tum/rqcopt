@@ -25,9 +25,9 @@ def compute_circuit_errors(J, g, Lxlist, t, nlayers):
         # permutations specifying gate layout
         horz_even_sites = list(range(0, 2*Lx, 2)) + list(range(1, 2*Lx, 2))
         horz_odd_sites  = list(np.roll(range(0, 2*Lx, 2), -1)) + list(np.roll(range(1, 2*Lx, 2), -1))
-        perm_set[Lx] = [list(np.argsort(horz_even_sites)),  # horizontal even
-                        list(np.argsort(horz_odd_sites)),   # horizontal odd
-                        None]                               # vertical
+        perm_set[Lx] = [horz_even_sites,  # horizontal even
+                        horz_odd_sites,   # horizontal odd
+                        None]             # vertical
 
     # load optimized unitaries from disk
     Vlist = len(nlayers)*[None]

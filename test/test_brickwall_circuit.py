@@ -386,33 +386,21 @@ class TestBrickwallCircuit(unittest.TestCase):
         # must be symmetric
         self.assertTrue(np.allclose(H, H.T))
 
-
     def test_projection_probability(self):
         """
-        Test the measurement of the projection probability on the ancillary state |00...0>
+        Test the measurement of the projection probability on the ancillary state |00...0>.
         """
-        
-        def is_between(a,b,x):
-            """
-            returns if x is between a and b.
-            """
-            assert a<=b
-            #print(x)
-            return x>=a and x<=b
-        
         rng = np.random.default_rng()
-        # with identity, probability of projection should be 1
-        V = np.identity(4)
+        # probability of projection should be 1 for identity gates
         depth = 3
-        Vlist = [V for _ in range(depth)]
+        Vlist = [np.identity(4) for _ in range(depth)]
         L = 10
-        perms =  [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(depth)]
+        perms =  [None if i % 2 == 0 else np.roll(range(L), 1) for i in range(depth)]
         self.assertAlmostEqual(oc.projection_probability(Vlist, L, perms), 1)
 
-        # with V equal to X probability should be 0
-        X = np.array([[0,1],[1,0]])
-        V = np.kron(X,X)
-        Vlist = [V for _ in range(1)]
+        # probability should be 0 for V equal to X
+        X = np.array([[0, 1], [1, 0]])
+        Vlist = [np.kron(X, X) for _ in range(1)]
         self.assertAlmostEqual(oc.projection_probability(Vlist, L, perms), 0)
 
         # only ancillary qubits are relevant
@@ -420,24 +408,24 @@ class TestBrickwallCircuit(unittest.TestCase):
         Vlist = [V for _ in range(1)]
         self.assertAlmostEqual(oc.projection_probability(Vlist, L, perms), 1)
 
-        # probability always in [0,1]
+        # probability always in [0, 1]
         Vlist = [unitary_group.rvs(4, random_state=rng) for i in range(depth)]
-        
-        self.assertTrue(is_between(0,1,oc.projection_probability(Vlist, L, perms)))
-        
+
+        self.assertTrue(0 <= oc.projection_probability(Vlist, L, perms) <= 1)
+
         # only one ancillary qubit
         L = 6
         anc = [0]
         V = np.identity(4)
         Vlist = [V for _ in range(1)]
-        perms =  [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(depth)]
+        perms =  [None if i % 2 == 0 else np.roll(range(L), 1) for i in range(depth)]
         self.assertAlmostEqual(oc.projection_probability(Vlist, L, perms, anc), 1)
         X = np.array([[0,1],[1,0]])
         V = np.kron(X,X)
         Vlist = [V for _ in range(1)]
         self.assertAlmostEqual(oc.projection_probability(Vlist, L, perms, anc), 0)
         Vlist = [unitary_group.rvs(4, random_state=rng) for i in range(depth)]
-        self.assertTrue(is_between(0,1,oc.projection_probability(Vlist, L, perms, anc)))
+        self.assertTrue(0 <= oc.projection_probability(Vlist, L, perms, anc) <= 1)
 
 
 if __name__ == "__main__":

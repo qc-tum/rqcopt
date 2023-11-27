@@ -31,7 +31,7 @@ def trotterized_time_evolution(L: int, hloc, coeffs, dt: float, nsteps):
     with the splitting method specified by coefficients `coeffs`.
     """
     Ulist = [scipy.linalg.expm(-1j*c*dt*hloc) for c in coeffs]
-    perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(len(coeffs))]
+    perms = [None if i % 2 == 0 else np.roll(range(L), 1) for i in range(len(coeffs))]
     V = oc.brickwall_unitary(Ulist, L, perms)
     return np.linalg.matrix_power(V, nsteps)
 
@@ -175,7 +175,7 @@ def main():
 
     # optimized circuits
     err_iter_opt = {}
-    for nlayers in range(3, 19, 2):
+    for nlayers in range(3, 21, 2):
         with h5py.File(f"heisenberg1d_dynamics_opt_n{nlayers}.hdf5", "r") as f:
             # parameters must agree
             assert f.attrs["L"] == L
@@ -185,8 +185,8 @@ def main():
             err_iter_opt[nlayers] = f["err_iter"][:]
 
     # compare in terms of number of layers
-    plt.loglog(range(3, 19, 2),
-               [err_iter_opt[n][-1] for n in range(3, 19, 2)], 'o-', linewidth=2, label="opt. circuit")
+    plt.loglog(range(3, 21, 2),
+               [err_iter_opt[n][-1] for n in range(3, 21, 2)], 'o-', linewidth=2, label="opt. circuit")
     plt.loglog((len(coeffs_stra)-1)*nsteps_stra + 1, err_stra, '.-', label="Strang")
     plt.loglog((len(coeffs_suz4)-1)*nsteps_suz4 + 1, err_suz4, 'v-', label="Suzuki order 4")
     plt.loglog((len(coeffs_yosh)-1)*nsteps_yosh + 1, err_yosh, '^-', label="Yoshida order 4")

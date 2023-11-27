@@ -25,7 +25,7 @@ def trotterized_time_evolution(L: int, hloc, coeffs, dt: float, nsteps):
     with the splitting method specified by coefficients `coeffs`.
     """
     Vlist = [scipy.linalg.expm(-1j*c*dt*hloc) for c in coeffs]
-    perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(len(coeffs))]
+    perms = [None if i % 2 == 0 else np.roll(range(L), 1) for i in range(len(coeffs))]
     V = oc.brickwall_unitary(Vlist, L, perms)
     return np.linalg.matrix_power(V, nsteps)
 

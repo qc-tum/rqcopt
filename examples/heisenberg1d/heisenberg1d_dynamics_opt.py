@@ -61,13 +61,13 @@ def heisenberg1d_dynamics_opt(nlayers: int, bootstrap: bool, coeffs_start=[], **
         id4 = np.identity(4).reshape((1, 4, 4))
         Vlist_start = np.concatenate((id4, Vlist_start, id4), axis=0)
         assert Vlist_start.shape[0] == nlayers
-        perms = [None if i % 2 == 1 else np.roll(range(L), -1) for i in range(len(Vlist_start))]
+        perms = [None if i % 2 == 1 else np.roll(range(L), 1) for i in range(len(Vlist_start))]
     else:
         # local Hamiltonian term
         hloc = construct_heisenberg_local_term(J, h)
         assert len(coeffs_start) == nlayers
         Vlist_start = [scipy.linalg.expm(-1j*c*t*hloc) for c in coeffs_start]
-        perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(len(Vlist_start))]
+        perms = [None if i % 2 == 0 else np.roll(range(L), 1) for i in range(len(Vlist_start))]
     # perform optimization
     Vlist, f_iter, err_iter = oc.optimize_brickwall_circuit(L, expiH, Vlist_start, perms, **kwargs)
 

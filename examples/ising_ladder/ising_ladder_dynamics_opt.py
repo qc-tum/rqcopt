@@ -55,9 +55,9 @@ def ising_ladder_dynamics_opt(nlayers: int, method_start: oc.SplittingMethod=Non
     # permutations specifying gate layout
     horz_even_sites = [0, 2, 1, 3, 4, 6, 5, 7]
     horz_odd_sites  = [2, 4, 3, 5, 6, 0, 7, 1]
-    perm_set = [list(np.argsort(horz_even_sites)),  # horizontal even
-                list(np.argsort(horz_odd_sites)),   # horizontal odd
-                None]                               # vertical
+    perm_set = [horz_even_sites, # horizontal even
+                horz_odd_sites,  # horizontal odd
+                None]            # vertical
 
     # unitaries used as starting point for optimization
     Vlist_start = []

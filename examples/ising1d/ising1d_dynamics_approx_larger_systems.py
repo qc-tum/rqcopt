@@ -38,7 +38,7 @@ def compute_circuit_errors(J, g, Llist, t, nlayers):
     circ_err = np.zeros((len(Llist), len(nlayers)))
     for i, L in enumerate(Llist):
         for j, n in enumerate(nlayers):
-            perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(n)]
+            perms = [None if i % 2 == 0 else np.roll(range(L), 1) for i in range(n)]
             circ_err[i, j] = np.linalg.norm(oc.brickwall_unitary(Vlist[j], L, perms) - expiH[L], ord=2)
 
     print("error computation consistency check:", np.linalg.norm(err_opt - circ_err[0], np.inf))

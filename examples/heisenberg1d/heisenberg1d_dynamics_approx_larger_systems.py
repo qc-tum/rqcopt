@@ -38,7 +38,7 @@ def compute_circuit_errors(J, h, Llist, t, nlayers):
     circ_err = np.zeros((len(Llist), len(nlayers)))
     for i, L in enumerate(Llist):
         for j, n in enumerate(nlayers):
-            perms = [None if i % 2 == 0 else np.roll(range(L), -1) for i in range(n)]
+            perms = [None if i % 2 == 0 else np.roll(range(L), 1) for i in range(n)]
             circ_err[i, j] = np.linalg.norm(oc.brickwall_unitary(Vlist[j], L, perms) - expiH[L], ord=2)
 
     print("error computation consistency check:", np.linalg.norm(err_opt - circ_err[0], np.inf))
@@ -59,7 +59,7 @@ def main(recompute=True):
     t = 0.25
 
     # number of circuit layers
-    nlayers = list(range(3, 19, 2))
+    nlayers = list(range(3, 21, 2))
 
     if recompute:
         circ_err = compute_circuit_errors(J, h, Llist, t, nlayers)
@@ -93,8 +93,9 @@ def main(recompute=True):
 
     for i, L in enumerate(Llist):
         plt.loglog(nlayers, circ_err[i], '.-', color=clrs[i], label=f"L = {L}")
-    xt = [3, 4, 5, 6, 7, 9, 11, 13, 15, 17]
+    xt = [3, 4, 5, 6, 7, 9, 11, 13, 15, 17, 19]
     plt.xticks(xt, [rf"$\mathdefault{{{l}}}$" if l % 2 == 1 else "" for l in xt])
+    plt.xticks([], [], minor=True)
     plt.xlabel("number of layers")
     plt.ylabel("error")
     plt.legend(loc="upper right")

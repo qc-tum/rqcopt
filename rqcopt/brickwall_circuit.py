@@ -12,7 +12,7 @@ def parallel_gates(V, L, perm=None):
     for i in range(L // 2):
         W = np.kron(W, V)
     if perm is not None:
-        W = permute_operation(W, perm)
+        W = permute_operation(W, np.argsort(perm))
     return W
 
 
@@ -24,8 +24,7 @@ def parallel_gates_grad(V, L, U, perm=None):
     assert U.shape == (2**L, 2**L)
     assert L % 2 == 0
     if perm is not None:
-        inv_perm = np.argsort(perm)
-        U = permute_operation(U, inv_perm)
+        U = permute_operation(U, perm)
     G = np.zeros_like(V)
     for i in range(0, L, 2):
         Ua = parallel_gates(V, i)
@@ -53,7 +52,7 @@ def parallel_gates_directed_grad(V, L, Z, perm=None):
                 W = np.kron(W, V)
         G += W
     if perm is not None:
-        G = permute_operation(G, perm)
+        G = permute_operation(G, np.argsort(perm))
     return G
 
 
@@ -66,8 +65,7 @@ def parallel_gates_hess(V, L, Z, U, perm=None, unitary_proj=False):
     assert U.shape == (2**L, 2**L)
     assert L % 2 == 0 and L > 0
     if perm is not None:
-        inv_perm = np.argsort(perm)
-        U = permute_operation(U, inv_perm)
+        U = permute_operation(U, perm)
     G = np.zeros_like(V)
     for i in range(0, L, 2):
         for j in range(0, i, 2):
@@ -345,15 +343,12 @@ def permute_operation(U: np.ndarray, perm):
 
 def projection_probability(Vlist, L, perms, anc=None, state=None):
     """
-    Calculates the probability of measuring |0000...> on the ancillary qubits
+    Calculate the probability of measuring |0000...> on the ancillary qubits
     after the brickwall circuit.
     """
     # initial state |0...0> on the whole system
     if state is None:
         state = np.zeros(2**L)
         state[0] = 1
-    assert(len(state)==2**L)
-    state = np.einsum('ij,j', brickwall_unitary(Vlist, L, perms), state)
-    p = blockenc_isometry(L, anc)
-    pp = p.dot(p.conj().T)
-    return abs(np.einsum('i,ij,j', state.conj(), pp, state))**2
+    return np.linalg.norm(blockenc_isometry(L, anc).conj().T @
+                         (brickwall_unitary(Vlist, L, perms) @ state))**2
