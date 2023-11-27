@@ -67,9 +67,10 @@ def project_unitary_tangent(u, z):
     return z - u @ symm(u.conj().T @ z)
 
 
-def blockenc_isometry(L: int, anc=None):
+def blockenc_isometry(L: int, idx_anc=None):
     """
-    Construct the default block-encoding isometry:
+    Construct a block-encoding isometry of the form
+    (for unspecified ancillary indices):
 
       --------
       --|0>
@@ -77,9 +78,10 @@ def blockenc_isometry(L: int, anc=None):
       --|0>
         .
         .
-    or from list of ancillaries.
+
+    or according to the list of ancillary qubits in 'idx_anc'.
     """
-    if anc is None:
+    if idx_anc is None:
         b = np.array([[ 1., 0.],
                       [ 0., 0.],
                       [ 0., 1.],
@@ -88,14 +90,14 @@ def blockenc_isometry(L: int, anc=None):
         for i in range(L // 2):
             p = np.kron(p, b)
     else:
-        id = np.identity(2)
-        zero_s = np.array([[1],[0]])
+        id2 = np.identity(2)
+        ket0 = np.array([[1.], [0.]])
         p = np.identity(1)
         for i in range(L):
-             if i in anc:
-                 p = np.kron(p, zero_s)
+             if i in idx_anc:
+                 p = np.kron(p, ket0)
              else:
-                 p = np.kron(p, id)
+                 p = np.kron(p, id2)
     return p
 
 

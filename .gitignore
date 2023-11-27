@@ -15,7 +15,4 @@ __pycache__
 # Mac
 .DS_Store
 
-# output files
-*.hdf5
-
 rqcopt.egg-info/
