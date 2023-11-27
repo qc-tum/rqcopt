@@ -183,15 +183,27 @@ def main():
             assert np.array_equal(f.attrs["h"], h)
             assert f.attrs["t"] == t
             err_iter_opt[nlayers] = f["err_iter"][:]
+    # simplistic optimization
+    err_iter_opt_simplistic = {}
+    for nlayers in range(3, 21, 2):
+        with h5py.File(f"heisenberg1d_dynamics_opt_simplistic_n{nlayers}.hdf5", "r") as f:
+            # parameters must agree
+            assert f.attrs["L"] == L
+            assert np.array_equal(f.attrs["J"], J)
+            assert np.array_equal(f.attrs["h"], h)
+            assert f.attrs["t"] == t
+            err_iter_opt_simplistic[nlayers] = f["err_iter"][:]
 
     # compare in terms of number of layers
-    plt.loglog(range(3, 21, 2),
-               [err_iter_opt[n][-1] for n in range(3, 21, 2)], 'o-', linewidth=2, label="opt. circuit")
+    line, = plt.loglog(range(3, 21, 2),
+                       [err_iter_opt[n][-1] for n in range(3, 21, 2)], 'o-', linewidth=2, label="opt. circuit")
     plt.loglog((len(coeffs_stra)-1)*nsteps_stra + 1, err_stra, '.-', label="Strang")
     plt.loglog((len(coeffs_suz4)-1)*nsteps_suz4 + 1, err_suz4, 'v-', label="Suzuki order 4")
     plt.loglog((len(coeffs_yosh)-1)*nsteps_yosh + 1, err_yosh, '^-', label="Yoshida order 4")
     plt.loglog((len(coeffs_mcla)-1)*nsteps_mcla + 1, err_mcla, '+-', label="McLachlan RKN-4")
     plt.loglog((len(coeffs_blan)-1)*nsteps_blan + 1, err_blan, '*-', label="Blanes Moan PRK-4")
+    plt.loglog(range(3, 21, 2),
+               [err_iter_opt_simplistic[n][-1] for n in range(3, 21, 2)], '.--', label="simplistic opt.", color=line.get_color())
     xt = [3, 5, 7, 9, 13, 25, 49]
     plt.xticks(xt, [rf"$\mathdefault{{{l}}}$" for l in xt])
     plt.xlabel("number of layers")
