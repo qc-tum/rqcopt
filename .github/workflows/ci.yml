@@ -1,4 +1,5 @@
-name: Run Unittests
+name: CI
+
 on:
   push:
     branches:
@@ -8,20 +9,16 @@ on:
       - master
 
 jobs:
-  build:
-    runs-on: self-hosted
+  unit-tests:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10' 
-      - name: Create & Activate venv
-        run: |
-             python3 -m venv .venv
-             source .venv/bin/activate
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install --editable .
-      - name: Run tests with pytest
+      - name: Run tests
         run: python3 -m unittest discover -s ./test/
